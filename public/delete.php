@@ -1,23 +1,29 @@
 <?php
 session_start();
-require_once __DIR__ . '/../../config/pdo.php';
+require_once __DIR__ . '/../config/pdo.php';
 
-if (!empty($_SESSION['isLoggedIn']) && $_SERVER['REQUEST_METHOD'] === "GET" && !empty($_GET['id'])) {
-    $id = $_GET['id'];
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
+    $id = intval($_POST['id']);
+    $id_users = $_SESSION['id_users'] ?? '';
 
-    $stmt = $pdo->prepare("SELECT * FROM messages WHERE id=:id");
-    $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-    $stmt->execute();
-    $messages = $stmt->fetch();
+    if (empty($id_users)) {
+        echo 'User not logged in.';
+        exit;
+    }
 
-    if (!empty($messages) && $_SESSION['id'] === $messages['user_id']) {
-        $stmt = $pdo->prepare("DELETE FROM messages WHERE id=:id");
+    try {
+        $stmt = $pdo->prepare("DELETE FROM messages WHERE id = :id AND id_users = :id_users");
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-    } 
-
-    header("Location: /chat.php");
-    exit();
+        $stmt->bindValue(':id_users', $id_users, PDO::PARAM_INT);
+        if ($stmt->execute()) {
+            echo 'success';
+        } else {
+            echo 'error';
+        }
+    } catch (PDOException $e) {
+        echo 'error: ' . $e->getMessage();
+    }
 } else {
-    header("Location: /chat.php");
+    echo 'error';
 }
+?>

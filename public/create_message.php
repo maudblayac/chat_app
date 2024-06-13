@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->bindValue(":create_at", $create_at, PDO::PARAM_STR);
             $stmt->bindValue(":id_users", $id_users, PDO::PARAM_INT);
             $stmt->execute();
-            header('Location: index.php');
+            header('Location: chat.php');
             exit;
         } catch (PDOException $e) {
             $error_message = 'Error: ' . $e->getMessage();
@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <button class="delete-button" onclick="window.location.href='../security/logout.php'">Log out</button>
         </div>
         <div class="chat-messages" id="chat-messages">
+            <!-- Fetch and display messages from the database -->
             <?php
             try {
                 $stmt = $pdo->query("SELECT messages.id, messages.message, messages.create_at, users.pseudo FROM messages JOIN users ON messages.id_users = users.id ORDER BY create_at DESC");
@@ -72,23 +73,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <script>
         function deleteMessage(id) {
             if (confirm('Are you sure you want to delete this message?')) {
-                const formData = new FormData();
-                formData.append('id', id);
-
-                fetch('../public/delete.php', {
+                fetch('delete_message.php', {
                     method: 'POST',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'id=' + id
                 })
                 .then(response => response.text())
                 .then(data => {
                     if (data === 'success') {
                         location.reload();
                     } else {
-                        alert('Error deleting message');
+                        alert('Error deleting message.');
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
                 });
             }
         }
